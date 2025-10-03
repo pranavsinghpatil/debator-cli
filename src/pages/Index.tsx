@@ -130,10 +130,10 @@ const Index = () => {
         <header className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-4xl font-bold text-foreground mb-2">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-chart-5 bg-clip-text text-transparent mb-2">
                 📈 Rife-Trade
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground text-lg">
                 Real-time news, sentiment, and market prices
               </p>
             </div>
@@ -142,10 +142,10 @@ const Index = () => {
         </header>
 
         {/* Market & Ticker Selection */}
-        <div className="mb-6 flex flex-wrap items-center gap-4 justify-between bg-card p-4 rounded-xl border">
+        <div className="mb-8 flex flex-wrap items-center gap-4 justify-between bg-gradient-to-r from-primary/5 to-chart-5/5 backdrop-blur-sm p-5 rounded-2xl border-2 border-primary/20">
           <div className="flex flex-wrap items-center gap-3">
             <Select value={market} onValueChange={setMarket}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[180px] bg-card border-primary/30">
                 <SelectValue placeholder="Select Market" />
               </SelectTrigger>
               <SelectContent>
@@ -155,7 +155,7 @@ const Index = () => {
             </Select>
 
             <Select value={ticker} onValueChange={setTicker}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[180px] bg-card border-primary/30">
                 <SelectValue placeholder="Select Ticker" />
               </SelectTrigger>
               <SelectContent>
@@ -167,50 +167,50 @@ const Index = () => {
               </SelectContent>
             </Select>
 
-            <Button onClick={handleManualRefresh} variant="outline" size="sm">
+            <Button onClick={handleManualRefresh} className="bg-primary hover:bg-primary/90" size="sm">
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
           </div>
 
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm font-medium text-foreground bg-card px-4 py-2 rounded-lg border border-primary/20">
             Last updated: {lastUpdate.toLocaleTimeString()}
           </div>
         </div>
 
         {/* Top Row - Info Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        <InfoCard title="Ticker & Latest Price">
-          <PriceCard {...priceData} />
-        </InfoCard>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <InfoCard title="Ticker & Latest Price" className="bg-gradient-to-br from-primary/10 to-primary/5">
+            <PriceCard {...priceData} />
+          </InfoCard>
 
-        <InfoCard title="Overall Sentiment">
-          <SentimentCard {...sentimentData} />
-        </InfoCard>
+          <InfoCard title="Overall Sentiment" className="bg-gradient-to-br from-chart-2/10 to-chart-2/5">
+            <SentimentCard {...sentimentData} />
+          </InfoCard>
 
-        <InfoCard title="Top Headlines">
-          <HeadlinesCard headlines={headlines} />
-        </InfoCard>
+          <InfoCard title="Top Headlines" className="bg-gradient-to-br from-chart-4/10 to-chart-4/5">
+            <HeadlinesCard headlines={headlines} />
+          </InfoCard>
 
-        <InfoCard title="Status / Logs">
-          <StatusLogCard logs={logs} />
-        </InfoCard>
-      </div>
+          <InfoCard title="Status / Logs" className="bg-gradient-to-br from-chart-5/10 to-chart-5/5">
+            <StatusLogCard logs={logs} />
+          </InfoCard>
+        </div>
 
         {/* Middle Row - Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <InfoCard title="Price & Sentiment Timeline" className="lg:col-span-1">
-          <div className="h-[300px] w-full">
-            <PriceChart data={priceChartData} />
-          </div>
-        </InfoCard>
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
+          <InfoCard title="Price & Sentiment Timeline" className="lg:col-span-3 bg-gradient-to-br from-primary/5 to-chart-1/10">
+            <div className="h-[350px] w-full">
+              <PriceChart data={priceChartData} />
+            </div>
+          </InfoCard>
 
-        <InfoCard title="Sentiment Distribution">
-          <div className="h-[300px] w-full">
-            <SentimentBarChart data={sentimentDistribution} />
-          </div>
-        </InfoCard>
-      </div>
+          <InfoCard title="Sentiment Distribution" className="lg:col-span-2 bg-gradient-to-br from-chart-2/5 to-chart-3/5">
+            <div className="h-[350px] w-full">
+              <SentimentBarChart data={sentimentDistribution} />
+            </div>
+          </InfoCard>
+        </div>
 
       </div>
       
