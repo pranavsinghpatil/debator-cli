@@ -9,9 +9,9 @@ interface InfoCardProps {
 
 export const InfoCard = ({ title, children, className = "" }: InfoCardProps) => {
   return (
-    <Card className={`shadow-sm border-border ${className}`}>
+    <Card className={`border-border ${className}`}>
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
+        <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
           {title}
         </CardTitle>
       </CardHeader>

@@ -9,6 +9,8 @@ import { SentimentBarChart } from "@/components/dashboard/SentimentBarChart";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { Footer } from "@/components/Footer";
 
 // Mock data types
 interface LogEntry {
@@ -122,56 +124,62 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
-      {/* Header */}
-      <header className="mb-8 text-center">
-        <h1 className="text-4xl font-bold text-foreground mb-2">
-          📈 Rife-Trade Dashboard
-        </h1>
-        <p className="text-muted-foreground">
-          Real-time news, sentiment, and market prices
-        </p>
-      </header>
+    <div className="min-h-screen bg-background flex flex-col">
+      <div className="flex-1 p-4 md:p-6 lg:p-8">
+        {/* Header */}
+        <header className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-4xl font-bold text-foreground mb-2">
+                📈 Rife-Trade
+              </h1>
+              <p className="text-muted-foreground">
+                Real-time news, sentiment, and market prices
+              </p>
+            </div>
+            <ThemeToggle />
+          </div>
+        </header>
 
-      {/* Market & Ticker Selection */}
-      <div className="mb-6 flex flex-wrap items-center gap-4 justify-between">
-        <div className="flex flex-wrap items-center gap-3">
-          <Select value={market} onValueChange={setMarket}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select Market" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="indian">Indian Market</SelectItem>
-              <SelectItem value="global">Global Market</SelectItem>
-            </SelectContent>
-          </Select>
+        {/* Market & Ticker Selection */}
+        <div className="mb-6 flex flex-wrap items-center gap-4 justify-between bg-card p-4 rounded-xl border">
+          <div className="flex flex-wrap items-center gap-3">
+            <Select value={market} onValueChange={setMarket}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select Market" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="indian">Indian Market</SelectItem>
+                <SelectItem value="global">Global Market</SelectItem>
+              </SelectContent>
+            </Select>
 
-          <Select value={ticker} onValueChange={setTicker}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select Ticker" />
-            </SelectTrigger>
-            <SelectContent>
-              {(market === "indian" ? indianTickers : globalTickers).map((t) => (
-                <SelectItem key={t} value={t}>
-                  {t}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <Select value={ticker} onValueChange={setTicker}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select Ticker" />
+              </SelectTrigger>
+              <SelectContent>
+                {(market === "indian" ? indianTickers : globalTickers).map((t) => (
+                  <SelectItem key={t} value={t}>
+                    {t}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <Button onClick={handleManualRefresh} variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
+            <Button onClick={handleManualRefresh} variant="outline" size="sm">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
+
+          <div className="text-sm text-muted-foreground">
+            Last updated: {lastUpdate.toLocaleTimeString()}
+          </div>
         </div>
 
-        <div className="text-sm text-muted-foreground">
-          Last updated: {lastUpdate.toLocaleTimeString()}
-        </div>
-      </div>
-
-      {/* Top Row - Info Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {/* Top Row - Info Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <InfoCard title="Ticker & Latest Price">
           <PriceCard {...priceData} />
         </InfoCard>
@@ -189,8 +197,8 @@ const Index = () => {
         </InfoCard>
       </div>
 
-      {/* Middle Row - Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {/* Middle Row - Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <InfoCard title="Price & Sentiment Timeline" className="lg:col-span-1">
           <div className="h-[300px] w-full">
             <PriceChart data={priceChartData} />
@@ -204,10 +212,9 @@ const Index = () => {
         </InfoCard>
       </div>
 
-      {/* Footer Info */}
-      <div className="text-center text-sm text-muted-foreground">
-        <p>Auto-refresh interval: 60 seconds • Data powered by market feeds</p>
       </div>
+      
+      <Footer />
     </div>
   );
 };
