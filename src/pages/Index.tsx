@@ -125,15 +125,15 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <div className="flex-1 p-4 md:p-6 lg:p-8">
+      <div className="flex-1 p-4 md:p-6 max-w-[1600px] mx-auto w-full">
         {/* Header */}
-        <header className="mb-8">
+        <header className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-chart-5 bg-clip-text text-transparent mb-2">
+              <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-1">
                 📈 Rife-Trade
               </h1>
-              <p className="text-muted-foreground text-lg">
+              <p className="text-muted-foreground text-sm">
                 Real-time news, sentiment, and market prices
               </p>
             </div>
@@ -142,71 +142,77 @@ const Index = () => {
         </header>
 
         {/* Market & Ticker Selection */}
-        <div className="mb-8 flex flex-wrap items-center gap-4 justify-between bg-gradient-to-r from-primary/5 to-chart-5/5 backdrop-blur-sm p-5 rounded-2xl border-2 border-primary/20">
+        <div className="mb-6 bg-card border p-4 rounded-lg">
           <div className="flex flex-wrap items-center gap-3">
-            <Select value={market} onValueChange={setMarket}>
-              <SelectTrigger className="w-[180px] bg-card border-primary/30">
-                <SelectValue placeholder="Select Market" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="indian">Indian Market</SelectItem>
-                <SelectItem value="global">Global Market</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-medium text-muted-foreground">Market:</label>
+              <Select value={market} onValueChange={setMarket}>
+                <SelectTrigger className="w-[120px] h-8 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="indian">Indian</SelectItem>
+                  <SelectItem value="global">Global</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-            <Select value={ticker} onValueChange={setTicker}>
-              <SelectTrigger className="w-[180px] bg-card border-primary/30">
-                <SelectValue placeholder="Select Ticker" />
-              </SelectTrigger>
-              <SelectContent>
-                {(market === "indian" ? indianTickers : globalTickers).map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {t}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-medium text-muted-foreground">Ticker:</label>
+              <Select value={ticker} onValueChange={setTicker}>
+                <SelectTrigger className="w-[140px] h-8 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(market === "indian" ? indianTickers : globalTickers).map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             <Button onClick={handleManualRefresh} className="bg-primary hover:bg-primary/90" size="sm">
-              <RefreshCw className="h-4 w-4 mr-2" />
+              <RefreshCw className="h-3 h-3 mr-1" />
               Refresh
             </Button>
-          </div>
 
-          <div className="text-sm font-medium text-foreground bg-card px-4 py-2 rounded-lg border border-primary/20">
-            Last updated: {lastUpdate.toLocaleTimeString()}
+            <div className="ml-auto text-xs text-muted-foreground bg-muted px-3 py-1 rounded">
+              Last updated: {lastUpdate.toLocaleTimeString()}
+            </div>
           </div>
         </div>
 
         {/* Top Row - Info Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <InfoCard title="Ticker & Latest Price" className="bg-gradient-to-br from-primary/10 to-primary/5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <InfoCard title="Ticker & Latest Price">
             <PriceCard {...priceData} />
           </InfoCard>
 
-          <InfoCard title="Overall Sentiment" className="bg-gradient-to-br from-chart-2/10 to-chart-2/5">
+          <InfoCard title="Overall Sentiment">
             <SentimentCard {...sentimentData} />
           </InfoCard>
 
-          <InfoCard title="Top Headlines" className="bg-gradient-to-br from-chart-4/10 to-chart-4/5">
+          <InfoCard title="Top Headlines">
             <HeadlinesCard headlines={headlines} />
           </InfoCard>
 
-          <InfoCard title="Status / Logs" className="bg-gradient-to-br from-chart-5/10 to-chart-5/5">
+          <InfoCard title="Status / Logs">
             <StatusLogCard logs={logs} />
           </InfoCard>
         </div>
 
         {/* Middle Row - Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
-          <InfoCard title="Price & Sentiment Timeline" className="lg:col-span-3 bg-gradient-to-br from-primary/5 to-chart-1/10">
-            <div className="h-[350px] w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          <InfoCard title="Price & Sentiment Timeline" className="lg:col-span-3">
+            <div className="h-[300px] w-full">
               <PriceChart data={priceChartData} />
             </div>
           </InfoCard>
 
-          <InfoCard title="Sentiment Distribution" className="lg:col-span-2 bg-gradient-to-br from-chart-2/5 to-chart-3/5">
-            <div className="h-[350px] w-full">
+          <InfoCard title="Sentiment Distribution" className="lg:col-span-2">
+            <div className="h-[300px] w-full">
               <SentimentBarChart data={sentimentDistribution} />
             </div>
           </InfoCard>
