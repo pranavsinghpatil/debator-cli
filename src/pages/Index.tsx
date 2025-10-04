@@ -6,11 +6,14 @@ import { HeadlinesCard } from "@/components/dashboard/HeadlinesCard";
 import { StatusLogCard } from "@/components/dashboard/StatusLogCard";
 import { PriceChart } from "@/components/dashboard/PriceChart";
 import { SentimentBarChart } from "@/components/dashboard/SentimentBarChart";
+import { PriceTable } from "@/components/dashboard/PriceTable";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { RefreshCw, Search } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Footer } from "@/components/Footer";
+import { useToast } from "@/hooks/use-toast";
 
 // Mock data types
 interface LogEntry {
@@ -34,8 +37,10 @@ interface PriceDataPoint {
 }
 
 const Index = () => {
+  const { toast } = useToast();
   const [market, setMarket] = useState("indian");
   const [ticker, setTicker] = useState("RELIANCE");
+  const [customTicker, setCustomTicker] = useState("");
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [timeRange, setTimeRange] = useState("1M");
   const [logs, setLogs] = useState<LogEntry[]>([
@@ -95,6 +100,13 @@ const Index = () => {
   const indianTickers = ["RELIANCE", "TCS", "INFY", "HDFC", "WIPRO"];
   const globalTickers = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA"];
 
+  const priceTableData = [
+    { date: "2025-10-01", price: 2418.25, change: -8.50, changePercent: -0.35 },
+    { date: "2025-10-02", price: 2435.00, change: 16.75, changePercent: 0.69 },
+    { date: "2025-10-03", price: 2442.00, change: 7.00, changePercent: 0.29 },
+    { date: "2025-10-04", price: 2450.75, change: 8.75, changePercent: 0.36 },
+  ];
+
   useEffect(() => {
     const interval = setInterval(() => {
       const now = new Date();
@@ -124,6 +136,21 @@ const Index = () => {
     setLastUpdate(now);
   };
 
+  const handleCustomTickerSearch = () => {
+    if (customTicker.trim()) {
+      setTicker(customTicker.toUpperCase());
+      setCustomTicker("");
+    }
+  };
+
+  const handlePredict = (period: string) => {
+    toast({
+      title: "⚠️ Prediction Disclaimer",
+      description: `This is a predicted value for the next ${period}. Market predictions are based on historical data and sentiment analysis. They may not always be accurate. Please do your own research before making any investment decisions.`,
+      duration: 6000,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <div className="flex-1 p-4 md:p-6 max-w-[1600px] mx-auto w-full">
@@ -143,7 +170,7 @@ const Index = () => {
         </header>
 
         {/* Market & Ticker Selection */}
-        <div className="mb-6 bg-card border p-4 rounded-lg">
+        <div className="mb-6 bg-card border p-4 rounded-lg space-y-4">
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
               <label className="text-xs font-medium text-muted-foreground">Market:</label>
@@ -174,6 +201,19 @@ const Index = () => {
               </Select>
             </div>
 
+            <div className="flex items-center gap-1">
+              <Input
+                placeholder="Search ticker..."
+                value={customTicker}
+                onChange={(e) => setCustomTicker(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && handleCustomTickerSearch()}
+                className="w-[140px] h-8 text-xs"
+              />
+              <Button onClick={handleCustomTickerSearch} variant="outline" size="sm" className="h-8 px-2">
+                <Search className="w-3 h-3" />
+              </Button>
+            </div>
+
             <Button onClick={handleManualRefresh} className="bg-primary hover:bg-primary/90" size="sm">
               <RefreshCw className="h-3 h-3 mr-1" />
               Refresh
@@ -181,6 +221,49 @@ const Index = () => {
 
             <div className="ml-auto text-xs text-muted-foreground bg-muted px-3 py-1 rounded">
               Last updated: {lastUpdate.toLocaleTimeString()}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
+            <div className="flex items-center gap-1">
+              {["1W", "1M", "1Y", "5Y", "10Y"].map((range) => (
+                <Button
+                  key={range}
+                  variant={timeRange === range ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setTimeRange(range)}
+                  className="h-7 px-3 text-xs"
+                >
+                  {range}
+                </Button>
+              ))}
+            </div>
+            <div className="h-4 w-px bg-border mx-1" />
+            <div className="flex items-center gap-1">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-7 px-3 text-xs"
+                onClick={() => handlePredict("week")}
+              >
+                Predict Week
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-7 px-3 text-xs"
+                onClick={() => handlePredict("month")}
+              >
+                Predict Month
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-7 px-3 text-xs"
+                onClick={() => handlePredict("year")}
+              >
+                Predict Year
+              </Button>
             </div>
           </div>
         </div>
@@ -205,35 +288,8 @@ const Index = () => {
         </div>
 
         {/* Middle Row - Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-          <InfoCard title="Price & Sentiment Timeline" className="lg:col-span-3">
-            <div className="mb-3 flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-1">
-                {["1W", "1M", "1Y", "5Y", "10Y"].map((range) => (
-                  <Button
-                    key={range}
-                    variant={timeRange === range ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setTimeRange(range)}
-                    className="h-7 px-3 text-xs"
-                  >
-                    {range}
-                  </Button>
-                ))}
-              </div>
-              <div className="h-4 w-px bg-border mx-1" />
-              <div className="flex items-center gap-1">
-                <Button variant="outline" size="sm" className="h-7 px-3 text-xs">
-                  Predict Week
-                </Button>
-                <Button variant="outline" size="sm" className="h-7 px-3 text-xs">
-                  Predict Month
-                </Button>
-                <Button variant="outline" size="sm" className="h-7 px-3 text-xs">
-                  Predict Year
-                </Button>
-              </div>
-            </div>
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-6">
+          <InfoCard title={`Price & Sentiment Timeline (${timeRange})`} className="lg:col-span-3">
             <div className="h-[300px] w-full">
               <PriceChart data={priceChartData} />
             </div>
@@ -245,6 +301,11 @@ const Index = () => {
             </div>
           </InfoCard>
         </div>
+
+        {/* Price History Table */}
+        <InfoCard title="Price History">
+          <PriceTable data={priceTableData} ticker={ticker} />
+        </InfoCard>
 
       </div>
       
