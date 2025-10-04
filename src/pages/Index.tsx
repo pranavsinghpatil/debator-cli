@@ -37,6 +37,7 @@ const Index = () => {
   const [market, setMarket] = useState("indian");
   const [ticker, setTicker] = useState("RELIANCE");
   const [lastUpdate, setLastUpdate] = useState(new Date());
+  const [timeRange, setTimeRange] = useState("1M");
   const [logs, setLogs] = useState<LogEntry[]>([
     { timestamp: "10:30:01", type: "info", message: "Initializing dashboard..." },
     { timestamp: "10:30:02", type: "success", message: "Connected to market data feed" },
@@ -206,6 +207,33 @@ const Index = () => {
         {/* Middle Row - Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
           <InfoCard title="Price & Sentiment Timeline" className="lg:col-span-3">
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-1">
+                {["1W", "1M", "1Y", "5Y", "10Y"].map((range) => (
+                  <Button
+                    key={range}
+                    variant={timeRange === range ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setTimeRange(range)}
+                    className="h-7 px-3 text-xs"
+                  >
+                    {range}
+                  </Button>
+                ))}
+              </div>
+              <div className="h-4 w-px bg-border mx-1" />
+              <div className="flex items-center gap-1">
+                <Button variant="outline" size="sm" className="h-7 px-3 text-xs">
+                  Predict Week
+                </Button>
+                <Button variant="outline" size="sm" className="h-7 px-3 text-xs">
+                  Predict Month
+                </Button>
+                <Button variant="outline" size="sm" className="h-7 px-3 text-xs">
+                  Predict Year
+                </Button>
+              </div>
+            </div>
             <div className="h-[300px] w-full">
               <PriceChart data={priceChartData} />
             </div>
