@@ -155,22 +155,30 @@ const Index = () => {
     <div className="min-h-screen bg-background flex flex-col">
       <div className="flex-1 p-4 md:p-6 max-w-[1600px] mx-auto w-full">
         {/* Header */}
-        <header className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-1">
-                📈 Rife-Trade
-              </h1>
-              <p className="text-muted-foreground text-sm">
-                Real-time news, sentiment, and market prices
-              </p>
+        <header className="mb-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-primary to-chart-2 rounded-xl flex items-center justify-center shadow-lg">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-white">
+                  <path d="M3 17L9 11L13 15L21 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M14 7H21V14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">
+                  Rife-Trade
+                </h1>
+                <p className="text-muted-foreground text-xs md:text-sm font-medium">
+                  Real-time market intelligence platform
+                </p>
+              </div>
             </div>
             <ThemeToggle />
           </div>
         </header>
 
         {/* Market & Ticker Selection */}
-        <div className="mb-6 bg-card border p-4 rounded-lg space-y-4">
+        <div className="mb-6 bg-card border border-border/50 p-4 rounded-xl shadow-sm space-y-4">
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
               <label className="text-xs font-medium text-muted-foreground">Market:</label>
