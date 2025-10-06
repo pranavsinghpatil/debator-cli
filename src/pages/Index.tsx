@@ -7,10 +7,14 @@ import { StatusLogCard } from "@/components/dashboard/StatusLogCard";
 import { PriceChart } from "@/components/dashboard/PriceChart";
 import { SentimentBarChart } from "@/components/dashboard/SentimentBarChart";
 import { PriceTable } from "@/components/dashboard/PriceTable";
+import { MetricCard } from "@/components/dashboard/MetricCard";
+import { VolumeChart } from "@/components/dashboard/VolumeChart";
+import { CandlestickChart } from "@/components/dashboard/CandlestickChart";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { RefreshCw, Search } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { RefreshCw, Search, TrendingUp, BarChart3, Activity, DollarSign } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Footer } from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
@@ -105,6 +109,29 @@ const Index = () => {
     { date: "2025-10-02", price: 2435.00, change: 16.75, changePercent: 0.69 },
     { date: "2025-10-03", price: 2442.00, change: 7.00, changePercent: 0.29 },
     { date: "2025-10-04", price: 2450.75, change: 8.75, changePercent: 0.36 },
+  ];
+
+  const volumeData = [
+    { time: "09:15", volume: 2500000, type: "buy" as const },
+    { time: "09:30", volume: 3200000, type: "buy" as const },
+    { time: "09:45", volume: 2800000, type: "sell" as const },
+    { time: "10:00", volume: 4100000, type: "buy" as const },
+    { time: "10:15", volume: 3500000, type: "buy" as const },
+    { time: "10:30", volume: 2900000, type: "sell" as const },
+    { time: "10:45", volume: 3800000, type: "buy" as const },
+    { time: "11:00", volume: 3300000, type: "buy" as const },
+    { time: "11:15", volume: 2700000, type: "sell" as const },
+  ];
+
+  const candlestickData = [
+    { time: "09:15", open: 2418.25, high: 2425.00, low: 2415.00, close: 2422.50 },
+    { time: "09:30", open: 2422.50, high: 2430.00, low: 2420.00, close: 2428.75 },
+    { time: "09:45", open: 2428.75, high: 2438.00, low: 2427.00, close: 2435.00 },
+    { time: "10:00", open: 2435.00, high: 2442.00, low: 2433.00, close: 2440.25 },
+    { time: "10:15", open: 2440.25, high: 2443.00, low: 2437.00, close: 2438.50 },
+    { time: "10:30", open: 2438.50, high: 2445.00, low: 2436.00, close: 2442.00 },
+    { time: "10:45", open: 2442.00, high: 2448.00, low: 2441.00, close: 2445.75 },
+    { time: "11:00", open: 2445.75, high: 2452.00, low: 2444.00, close: 2450.75 },
   ];
 
   useEffect(() => {
@@ -276,42 +303,117 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Top Row - Info Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <InfoCard title="Ticker & Latest Price">
-            <PriceCard {...priceData} />
-          </InfoCard>
+        {/* Key Metrics Row */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+          <Card className="p-4">
+            <MetricCard
+              label="Price"
+              value={`₹${priceData.price.toFixed(2)}`}
+              change={priceData.changePercent}
+              icon={TrendingUp}
+            />
+          </Card>
+          <Card className="p-4">
+            <MetricCard
+              label="Volume"
+              value="32.5"
+              suffix="M"
+              change={12.5}
+              icon={BarChart3}
+            />
+          </Card>
+          <Card className="p-4">
+            <MetricCard
+              label="Market Cap"
+              value="16.8"
+              suffix="T"
+              icon={DollarSign}
+            />
+          </Card>
+          <Card className="p-4">
+            <MetricCard
+              label="52W High"
+              value="₹2,685"
+              icon={Activity}
+            />
+          </Card>
+          <Card className="p-4">
+            <MetricCard
+              label="52W Low"
+              value="₹2,115"
+              icon={Activity}
+            />
+          </Card>
+          <Card className="p-4">
+            <MetricCard
+              label="P/E Ratio"
+              value="28.4"
+              icon={TrendingUp}
+            />
+          </Card>
+        </div>
 
-          <InfoCard title="Overall Sentiment">
-            <SentimentCard {...sentimentData} />
-          </InfoCard>
+        {/* Main Content Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {/* Left Column - Price & Sentiment */}
+          <div className="space-y-6">
+            <InfoCard title="Ticker & Latest Price">
+              <PriceCard {...priceData} />
+            </InfoCard>
 
-          <InfoCard title="Top Headlines">
+            <InfoCard title="Overall Sentiment">
+              <SentimentCard {...sentimentData} />
+            </InfoCard>
+          </div>
+
+          {/* Middle Column - Headlines */}
+          <InfoCard title="Top Headlines" className="lg:col-span-2">
             <HeadlinesCard headlines={headlines} />
           </InfoCard>
+        </div>
 
-          <InfoCard title="Status / Logs">
+        {/* Status Logs */}
+        <div className="mb-8">
+          <InfoCard title="System Status & Activity Logs">
             <StatusLogCard logs={logs} />
           </InfoCard>
         </div>
 
-        {/* Middle Row - Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-6">
-          <InfoCard title={`Price & Sentiment Timeline (${timeRange})`} className="lg:col-span-3">
-            <div className="h-[300px] w-full">
-              <PriceChart data={priceChartData} />
-            </div>
-          </InfoCard>
+        {/* Charts Grid */}
+        <div className="space-y-6 mb-8">
+          {/* Price & Sentiment Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            <InfoCard title={`Price & Sentiment Timeline (${timeRange})`} className="lg:col-span-3">
+              <div className="h-[320px] w-full">
+                <PriceChart data={priceChartData} />
+              </div>
+            </InfoCard>
 
-          <InfoCard title="Sentiment Distribution" className="lg:col-span-2">
-            <div className="h-[300px] w-full">
-              <SentimentBarChart data={sentimentDistribution} />
-            </div>
-          </InfoCard>
+            <InfoCard title="Sentiment Distribution" className="lg:col-span-2">
+              <div className="h-[320px] w-full">
+                <SentimentBarChart data={sentimentDistribution} />
+              </div>
+            </InfoCard>
+          </div>
+
+          {/* Candlestick & Volume Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <InfoCard title={`Candlestick Chart (${timeRange})`}>
+              <div className="h-[280px] w-full">
+                <CandlestickChart data={candlestickData} />
+              </div>
+            </InfoCard>
+
+            <InfoCard title="Trading Volume">
+              <div className="h-[280px] w-full">
+                <VolumeChart data={volumeData} />
+              </div>
+            </InfoCard>
+          </div>
         </div>
 
         {/* Price History Table */}
-        <InfoCard title="Price History">
+        <InfoCard title="Historical Price Data">
           <PriceTable data={priceTableData} ticker={ticker} />
         </InfoCard>
 
