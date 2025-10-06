@@ -6,6 +6,7 @@ import { HeadlinesCard } from "@/components/dashboard/HeadlinesCard";
 import { StatusLogCard } from "@/components/dashboard/StatusLogCard";
 import { PriceChart } from "@/components/dashboard/PriceChart";
 import { SentimentBarChart } from "@/components/dashboard/SentimentBarChart";
+import { SentimentPieChart } from "@/components/dashboard/SentimentPieChart";
 import { PriceTable } from "@/components/dashboard/PriceTable";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -159,7 +160,7 @@ const Index = () => {
       <div className="flex-1 p-4 md:p-6 max-w-[1600px] mx-auto w-full">
         {/* Header */}
         <header className="mb-8">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-center">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-gradient-to-br from-primary to-chart-2 rounded-xl flex items-center justify-center shadow-lg">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-white">
@@ -167,7 +168,7 @@ const Index = () => {
                   <path d="M14 7H21V14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
-              <div>
+              <div className="text-center">
                 <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">
                   Rife-Trade
                 </h1>
@@ -176,13 +177,15 @@ const Index = () => {
                 </p>
               </div>
             </div>
-            <ThemeToggle />
+            <div className="absolute right-4 top-4">
+              <ThemeToggle />
+            </div>
           </div>
         </header>
 
         {/* Market & Ticker Selection */}
         <div className="mb-6 bg-card border border-border/50 p-4 rounded-xl shadow-sm space-y-4">
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-3">
             <div className="flex items-center gap-2">
               <label className="text-xs font-medium text-muted-foreground">Market:</label>
               <Select value={market} onValueChange={setMarket}>
@@ -325,11 +328,19 @@ const Index = () => {
               </div>
             </InfoCard>
 
-            <InfoCard title="Sentiment Distribution Analysis">
-              <div className="h-[350px] w-full">
-                <SentimentBarChart data={sentimentDistribution} />
-              </div>
-            </InfoCard>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <InfoCard title="Sentiment Distribution Analysis">
+                <div className="h-[350px] w-full">
+                  <SentimentBarChart data={sentimentDistribution} />
+                </div>
+              </InfoCard>
+
+              <InfoCard title="Sentiment Overview">
+                <div className="h-[350px] w-full">
+                  <SentimentPieChart data={sentimentDistribution} />
+                </div>
+              </InfoCard>
+            </div>
           </TabsContent>
 
           {/* Reports Tab */}
