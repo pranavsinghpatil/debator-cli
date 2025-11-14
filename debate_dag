@@ -1,0 +1,22 @@
+// Debate DAG
+digraph {
+	rankdir=LR
+	UserInput [label="UserInputNode
+(Topic)"]
+	AgentA [label="AgentA
+(Scientist)"]
+	AgentB [label="AgentB
+(Philosopher)"]
+	Memory [label="MemoryNode
+(summary per agent)"]
+	Validator [label=StateValidator]
+	Judge [label=JudgeNode]
+	UserInput -> AgentA
+	AgentA -> Memory
+	Memory -> AgentB
+	AgentB -> Memory
+	Memory -> Validator
+	Validator -> Judge
+	AgentA -> Validator
+	AgentB -> Validator
+}
