@@ -44,7 +44,7 @@ def run_debate(topic, persona_a="Scientist", persona_b="Philosopher"):
             return False
         # record
         seen_texts.add(text)
-        memory.update(r, agent.id, text)
+        memory.update(r, agent.id, agent.persona, text)
         # print to CLI and log
         print(f"[Round {r}] {agent.persona}: {text}")
     # After 8 rounds -> judge
@@ -54,7 +54,7 @@ def run_debate(topic, persona_a="Scientist", persona_b="Philosopher"):
     print(f"[Judge] Winner: {summary['winner']}")
     log_event("debate_completed", {"winner": summary["winner"], "scores": summary["scores"]})
     # generate DAG image
-    generate_dag()
+    generate_dag(memory, summary["winner"])
     return True
 
 if __name__ == "__main__":
