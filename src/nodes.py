@@ -4,16 +4,16 @@ import json
 import re
 import time
 from logger_util import log_event
-from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM
+from transformers import pipeline, AutoTokenizer, AutoModelForSeq2SeqLM # Changed to AutoModelForSeq2SeqLM for T5
 
 # --- Local Transformers Pipeline ---
 try:
-    MODEL_NAME = "gpt2"
+    MODEL_NAME = "google/flan-t5-base" # Changed model to flan-t5-base
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-    model = AutoModelForCausalLM.from_pretrained(MODEL_NAME)
+    model = AutoModelForSeq2SeqLM.from_pretrained(MODEL_NAME) # Changed to AutoModelForSeq2SeqLM
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token_id = tokenizer.eos_token_id
-    text_generator = pipeline("text-generation", model=model, tokenizer=tokenizer, device=-1)
+    text_generator = pipeline("text2text-generation", model=model, tokenizer=tokenizer, device=-1) # Changed task to text2text-generation
 except Exception as e:
     log_event("pipeline_creation_error", {"error": str(e)})
     text_generator = None
@@ -45,13 +45,12 @@ def jaccard_similarity(a, b):
 def clean_and_validate(text, prev_texts, max_words=60):
     if not text:
         return None
-    print(f"DEBUG: Raw generated text: '{text}'")
     text = first_paragraph(text)
     text = text.strip().strip('\"\'` ')
     if len(text.split()) > max_words:
         return None
-    # if not SENT_END_RE.search(text):
-    #     return None
+    if not SENT_END_RE.search(text):
+        return None
     if len(text.split()) < 4:
         return None
     for p in prev_texts:
@@ -99,27 +98,23 @@ class Agent:
 
     def speak(self, topic, memory_summary, round_no, generator=text_generator):
         persona = self.persona
-        prompt = f"""
-You are {persona}.
-Task: Provide one concise argument (1 paragraph, 1–3 sentences, <=50 words) about the topic below.
-Do NOT include metadata, quotes, or 'Round' labels. Respond only with the argument text.
-
-Topic: {topic}
-Private memory: {memory_summary}
-Round: {round_no}
-"""
+        # Flan-T5 prompt format
+        prompt = f"Debate Topic: {topic}\nYour Persona: {persona}\nYour Argument for Round {round_no}:"
+        if memory_summary:
+            prompt += f"\nPrevious Arguments: {memory_summary}"
+        
         prev_texts = [t["text"] for t in self.global_seen_texts]
-        gen_params = dict(max_new_tokens=60, do_sample=False, temperature=0.0, return_full_text=False)
-        for attempt in range(3):
-            if attempt == 2:
-                gen_params.update({"do_sample": True, "temperature": 0.7, "top_k":50, "top_p":0.95})
-            raw = hf_generate(prompt, **gen_params)
-            cleaned = clean_and_validate(raw, prev_texts + list(self.used_arguments))
-            if cleaned:
-                self.used_arguments.add(cleaned)
-                log_event("agent_speak", {"agent": self.id, "persona": persona, "round": round_no, "text": cleaned})
-                return cleaned
-            time.sleep(0.2)
+        gen_params = dict(max_new_tokens=60, do_sample=True, temperature=0.7, top_k=50, top_p=0.95, return_full_text=False)
+        
+        raw = hf_generate(prompt, **gen_params)
+        cleaned = clean_and_validate(raw, prev_texts + list(self.used_arguments))
+        
+        if cleaned:
+            self.used_arguments.add(cleaned)
+            log_event("agent_speak", {"agent": self.id, "persona": persona, "round": round_no, "text": cleaned})
+            return cleaned
+        
+        # Fallback if cleaning fails
         fallback = f"As a {persona}: concise evidence-based caution is necessary."
         log_event("agent_speak_fallback", {"agent": self.id, "round": round_no, "text": fallback})
         return fallback
@@ -130,11 +125,8 @@ class JudgeNode:
 
     def get_judge_rationale(self, scores, transcript, generator=text_generator):
         transcript_text = "\n".join([f"[{t['persona']} R{t['round']}]: {t['text']}" for t in transcript])
-        prompt = f"""
-You are an impartial judge. Scores: AgentA={scores['AgentA']:.2f}, AgentB={scores['AgentB']:.2f}.
-Transcript: {transcript_text}
-Task: Provide a 1-2 sentence rationale (concise) explaining who won and why. Output only the rationale.
-"""
+        # Flan-T5 prompt format
+        prompt = f"Debate Transcript: {transcript_text}\nAgentA Score: {scores['AgentA']:.2f}\nAgentB Score: {scores['AgentB']:.2f}\nTask: Provide a 1-2 sentence rationale (concise) explaining who won and why. Output only the rationale."
         raw = hf_generate(prompt, max_new_tokens=100, do_sample=False, temperature=0.0, return_full_text=False)
         rp = first_paragraph(raw)
         sentences = re.split(r'(?<=[.?!])\s+', rp)

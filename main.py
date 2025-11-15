@@ -1,12 +1,13 @@
 # main.py
 import sys
 import os
-import argparse
+sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 os.environ["TRANSFORMERS_VERBOSITY"] = "error"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 from nodes import MemoryNode, Agent, JudgeNode, ValidationError
 from logger_util import log_event
 from dag_gen import generate_dag
+from rich.console import Console
 
 def validate_turn(expected_agent, actual_agent, text, seen_texts):
     if expected_agent != actual_agent:
@@ -16,8 +17,9 @@ def validate_turn(expected_agent, actual_agent, text, seen_texts):
     if not text or len(text.split()) < 5:
         raise ValidationError("Argument too short; likely incoherent.")
 
-def run_debate(topic, persona_a="Scientist", persona_b="Philosopher"):
-    print(f"Starting debate between {persona_a} (AgentA) and {persona_b} (AgentB)...")
+def run_debate(topic, persona_a="Scientist", persona_b="Philosopher", on_round_end=None):
+    console = Console()
+    console.print(f"Starting debate between [bold green]{persona_a}[/bold green] (AgentA) and [bold yellow]{persona_b}[/bold yellow] (AgentB)...")
     log_event("debate_started", {"topic": topic, "persona_a": persona_a, "persona_b": persona_b})
 
     memory = MemoryNode()
@@ -45,33 +47,23 @@ def run_debate(topic, persona_a="Scientist", persona_b="Philosopher"):
             validate_turn(expected, agent.id, text, seen_texts)
         except ValidationError as e:
             log_event("validation_error", {"round": r, "error": str(e), "agent": agent.id, "text": text})
-            print(f"[Validation failed at round {r} for {agent.id}]: {e}")
-            return False
+            console.print(f"[bold red]Validation failed at round {r} for {agent.id}: {e}[/bold red]")
+            return None
             
         seen_texts.add(text)
         memory.update(r, agent.id, agent.persona, text)
         
-        print(f"[Round {r}] {agent.persona}: {text}")
+        color = "green" if is_a_turn else "yellow"
+        console.print(f"[bold {color}][Round {r}] {agent.persona}:[/bold {color}] {text}")
+        if on_round_end:
+            on_round_end(r)
 
     # Judge's turn
     summary = judge.review(memory)
-    print("\n[Judge] Summary of debate:")
-    print(summary["rationale"])
-    print(f"[Judge] Winner: {summary['winner']}")
     
     generate_dag(memory.transcript, summary)
-    return True
+    return summary
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run a debate between two AI agents.")
-    parser.add_argument("--topic", type=str, help="The topic of the debate.")
-    parser.add_argument("--persona-a", type=str, default="Scientist", help="The persona for Agent A.")
-    parser.add_argument("--persona-b", type=str, default="Philosopher", help="The persona for Agent B.")
-    args = parser.parse_args()
-
-    topic = args.topic
-    if not topic:
-        topic = "Should AI be regulated like medicine?"
-        print(f"No topic provided. Using default topic: '{topic}'")
-
-    run_debate(topic, args.persona_a, args.persona_b)
+    from app import main
+    main()
