@@ -1,7 +1,7 @@
 // Debate DAG
 digraph {
 	rankdir=TB splines=ortho
-	Topic [label="Topic: And if a scientist is a naturalist who wishes to go on to teach the scientific community where humans are"]
+	Topic [label="Topic: As a Scientist: concise evidence-based caution is necessary."]
 	AgentA [label="AgentA (Scientist)" shape=box style=rounded]
 	AgentB [label="AgentB (Philosopher)" shape=box style=rounded]
 	Judge [label=Judge shape=diamond]
@@ -23,26 +23,14 @@ digraph {
 	Arg_7 -> Arg_8
 	subgraph cluster_debate {
 		label="Debate Rounds" style=rounded
-		Arg_1 [label="R1: cientist is a naturalist who wishes to go on to teach the scientific community where humans are, then I am wrong about this.
-And as we‏re all aware, at times a scientist does not know what is truly required for it, and in short, it is wrong to assume a science as valuable as medicine. As a scientist, I don't need to be the only one to know all the basics of how biology works. I do" shape=note]
-		Arg_2 [label="R2: , there are a hundred, if not hundreds of millions, of human beings, who have been trained as philosophers' intellectual forebears and have taken very seriously that it is 'necessary to ensure that there is a certain degree of privacy and self-reliance that is essential to the development of good human flourishing, which, in the end, is necessary in our society.' Indeed, it is the ultimate responsibility of the entire society to make sure that this is not a problem." shape=note]
-		Arg_3 [label="R3:  an invention of some type of technology. I'd say, I've argued extensively about the idea that \"AI\" should not be regulated like medical insurance. But that's not the case. There's a number of reasons that \"AI\" should be regulated like medicine. One is that we are talking about a technology where the person running government can get health care through, say, some kind of government health insurer that charges a little more for the services that it charges. So if you" shape=note]
-		Arg_4 [label="R4: ian, though the very idea of the AI being regulated is, as John Paulson stated, –a ‘autonomous system of the laws of the universe'‑.
-
-
-In addition, while it may seem to be a useful idea to explain the implications of AI in general, it is not an ideal situation for an AI or any AI to be governed like medicine.
-The main problem with AI is that the very thing a philosopher can do is explain the workings of" shape=note]
-		Arg_5 [label="R5: t recent years, researchers have focused on the impact of artificial intelligence on our own personal lives. To date, most people have not been involved in any of the experiments conducted. As the science of AI progresses, it will become increasingly difficult for the public to understand what it does, and the results will be used for future research. While there are some fundamental differences between AI and medicine, the impact of AI in the past is often as large as 10 million-to-1." shape=note]
-		Arg_6 [label="R6: t with an example of the issue of regulation:
-1. A person is not allowed to talk to the doctor. If the patient has a doctor who is not there in advance, he will not do anything. If a patient cannot do anything, he may be denied access to a doctor's office. If a patient can speak to another doctor, and if the doctor does not speak to the patient, if the patient does not hear back from them, but if the" shape=note]
-		Arg_7 [label="R7:  be regulated like medicine?'
-
-
-I find that this line isn't pretty. In the first paragraph of the paper I write, \"Should AI be regulated like medicine? Does the system'should-be regulated like medicine?' I say \"No,\" and we're talking about the same line in the text. But for the first time in a long time, the idea that AI could be regulated like medicine? The answer, I am confident is yes.
-For example, the" shape=note]
-		Arg_8 [label="R8: ke of the general point of it, I've just made it clear that we need to do it. In my book Philosophy on Artificial Intelligence and Artificial Intelligence, I'm talking about a series of questions — as opposed to answering a question like \"Actions of the Machine Should Not Be regulated like medicine?\"
-This is what follows:
-The first thing you might do is just go to the top of the page, and then add your own question (or perhaps a list" shape=note]
+		Arg_1 [label="R1: tist: concise evidence-based caution is necessary." shape=note]
+		Arg_2 [label="R2: How would you explain the existence of a'real' disease?" shape=note]
+		Arg_3 [label="R3: , I am a scientist. I am an independent scientist, with no ties to any specific industry, with no specific set of beliefs, and with no specific agenda. I am an independent researcher who has been in public health for over 20 years." shape=note]
+		Arg_4 [label="R4: What is the best way to make AI more efficient?" shape=note]
+		Arg_5 [label="R5: Question: Why do you think AI is so great?" shape=note]
+		Arg_6 [label="R6: Who is the best person to lead AI research?" shape=note]
+		Arg_7 [label="R7: What is the best way to get AI to do what it does best?" shape=note]
+		Arg_8 [label="R8: How can we get more AI to do the things that are necessary?" shape=note]
 	}
 	Arg_8 -> Judge
 }

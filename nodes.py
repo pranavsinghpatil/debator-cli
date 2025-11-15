@@ -1,177 +1,174 @@
 # nodes.py
 import random
 import json
+import re
+import time
 from logger_util import log_event
-from transformers import pipeline
+from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM
 
 # --- Local Transformers Pipeline ---
 try:
-    text_generator = pipeline("text-generation", model="distilgpt2", device=-1) # device=-1 for CPU
+    MODEL_NAME = "gpt2"
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+    model = AutoModelForCausalLM.from_pretrained(MODEL_NAME)
+    if tokenizer.pad_token_id is None:
+        tokenizer.pad_token_id = tokenizer.eos_token_id
+    text_generator = pipeline("text-generation", model=model, tokenizer=tokenizer, device=-1)
 except Exception as e:
     log_event("pipeline_creation_error", {"error": str(e)})
     text_generator = None
 
-def hf_generate(prompt, max_new_tokens=128, temperature=0.7, do_sample=True):
+def hf_generate(prompt, **kwargs):
     if text_generator is None:
         return "Error: text-generation pipeline not available."
     try:
-        generation_kwargs = {
-            "max_new_tokens": max_new_tokens,
-            "do_sample": do_sample,
-            "temperature": temperature,
-        }
-        out = text_generator(
-            prompt,
-            return_full_text=False,
-            **generation_kwargs
-        )
-        return out[0]["generated_text"]
+        out = text_generator(prompt, **kwargs)
+        return out[0].get("generated_text", "").strip()
     except Exception as e:
         log_event("hf_generate_error", {"error": str(e)})
         return f"Error generating text: {e}"
+
+# --- Text cleaning and validation ---
+SENT_END_RE = re.compile(r'[.?!]\s*$')
+
+def first_paragraph(text):
+    parts = re.split(r'\n{1,2}', text.strip())
+    return parts[0].strip()
+
+def jaccard_similarity(a, b):
+    sa = set(a.lower().split())
+    sb = set(b.lower().split())
+    if not sa or not sb:
+        return 0.0
+    return len(sa & sb) / len(sa | sb)
+
+def clean_and_validate(text, prev_texts, max_words=60):
+    if not text:
+        return None
+    print(f"DEBUG: Raw generated text: '{text}'")
+    text = first_paragraph(text)
+    text = text.strip().strip('\"\'` ')
+    if len(text.split()) > max_words:
+        return None
+    # if not SENT_END_RE.search(text):
+    #     return None
+    if len(text.split()) < 4:
+        return None
+    for p in prev_texts:
+        if text == p:
+            return None
+        if jaccard_similarity(text, p) > 0.75:
+            return None
+    return text
 
 class ValidationError(Exception):
     pass
 
 class MemoryNode:
-    """
-    Stores per-agent summary + transcript.
-    Each agent only gets its relevant memory summary (no full state sharing).
-    """
     def __init__(self):
-        self.transcript = []  # list of (round, agent, text)
+        self.transcript = []
         self.summaries = {"AgentA": "", "AgentB": ""}
 
+    def _make_bulleted_summary(self, agent_id):
+        agent_msgs = [t["text"] for t in self.transcript if t["agent"] == agent_id]
+        other_agent = "AgentB" if agent_id == "AgentA" else "AgentA"
+        other_msgs = [t["text"] for t in self.transcript if t["agent"] == other_agent]
+        claim = agent_msgs[-1] if agent_msgs else ""
+        rebuttal = other_msgs[-1] if other_msgs else ""
+        question = "Balance safety vs innovation?" if claim and rebuttal else ""
+        def short(s, w=25):
+            return " ".join(s.split()[:w])
+        bullets = f"- Claim: {short(claim,25)}\n- Rebuttal: {short(rebuttal,25)}\n- Question: {question}"
+        self.summaries[agent_id] = bullets
+
     def update(self, round_no, agent_id, persona, text):
-        # append transcript
         self.transcript.append({"round": round_no, "agent": agent_id, "persona": persona, "text": text})
-        log_event("memory_update", {"round": round_no, "agent": agent_id, "persona": persona, "text": text})
-        # update summaries (simple abstractive heuristic: keep last 2 statements)
-        agent_messages = [t["text"] for t in self.transcript if t["agent"] == agent_id]
-        summary = " | ".join(agent_messages[-2:])
-        self.summaries[agent_id] = summary
-        log_event("memory_summary", {"agent": agent_id, "summary": summary})
+        log_event("memory_update", {"round": round_no, "agent": agent_id, "text": text})
+        self._make_bulleted_summary("AgentA")
+        self._make_bulleted_summary("AgentB")
 
     def get_memory_for(self, agent):
-        # Only return the agent's summary (no other agent's full state)
         return self.summaries.get(agent, "")
 
 class Agent:
-    """
-    Agent that produces an argument string given topic, memory, and turn_no.
-    """
     def __init__(self, persona_name, agent_id):
         self.persona = persona_name
         self.id = agent_id
         self.used_arguments = set()
+        self.global_seen_texts = []
 
-    def speak(self, topic, memory_summary, round_no):
-        prompt = f"As a {self.persona}, my argument about '{topic}' is:"
-        
-        generated_text = hf_generate(prompt, max_new_tokens=100, temperature=0.9, do_sample=True)
-        generated_text = generated_text.strip()
-        
-        # Prevent repetition
-        if generated_text in self.used_arguments:
-            # If repeated, try generating again with a slightly different prompt
-            prompt += " A different argument is:"
-            generated_text = hf_generate(prompt, max_new_tokens=100, temperature=0.9, do_sample=True)
-            generated_text = generated_text.strip()
+    def speak(self, topic, memory_summary, round_no, generator=text_generator):
+        persona = self.persona
+        prompt = f"""
+You are {persona}.
+Task: Provide one concise argument (1 paragraph, 1–3 sentences, <=50 words) about the topic below.
+Do NOT include metadata, quotes, or 'Round' labels. Respond only with the argument text.
 
-        self.used_arguments.add(generated_text)
-        log_event("agent_speak", {"agent": self.id, "persona": self.persona, "round": round_no, "text": generated_text})
-        return generated_text
+Topic: {topic}
+Private memory: {memory_summary}
+Round: {round_no}
+"""
+        prev_texts = [t["text"] for t in self.global_seen_texts]
+        gen_params = dict(max_new_tokens=60, do_sample=False, temperature=0.0, return_full_text=False)
+        for attempt in range(3):
+            if attempt == 2:
+                gen_params.update({"do_sample": True, "temperature": 0.7, "top_k":50, "top_p":0.95})
+            raw = hf_generate(prompt, **gen_params)
+            cleaned = clean_and_validate(raw, prev_texts + list(self.used_arguments))
+            if cleaned:
+                self.used_arguments.add(cleaned)
+                log_event("agent_speak", {"agent": self.id, "persona": persona, "round": round_no, "text": cleaned})
+                return cleaned
+            time.sleep(0.2)
+        fallback = f"As a {persona}: concise evidence-based caution is necessary."
+        log_event("agent_speak_fallback", {"agent": self.id, "round": round_no, "text": fallback})
+        return fallback
 
 class JudgeNode:
-    """
-    Reviews memory and transcript, produces summary and declares winner.
-    Uses simple scoring heuristics:
-      - Count occurrence of 'risk', 'safety', 'rights', 'autonomy', 'innovation' as proxies.
-      - Reward novelty (no repeated exact text).
-    """
     def __init__(self):
         pass
+
+    def get_judge_rationale(self, scores, transcript, generator=text_generator):
+        transcript_text = "\n".join([f"[{t['persona']} R{t['round']}]: {t['text']}" for t in transcript])
+        prompt = f"""
+You are an impartial judge. Scores: AgentA={scores['AgentA']:.2f}, AgentB={scores['AgentB']:.2f}.
+Transcript: {transcript_text}
+Task: Provide a 1-2 sentence rationale (concise) explaining who won and why. Output only the rationale.
+"""
+        raw = hf_generate(prompt, max_new_tokens=100, do_sample=False, temperature=0.0, return_full_text=False)
+        rp = first_paragraph(raw)
+        sentences = re.split(r'(?<=[.?!])\s+', rp)
+        rationale = " ".join(sentences[:2]).strip()
+        return rationale
 
     def review(self, memory: MemoryNode):
         transcript = memory.transcript
         log_event("judge_review_started", {"transcript_len": len(transcript)})
-
-        # Define persona-specific keywords with weights
-        # Higher weights for more central concepts
         weighted_keywords = {
-            "AgentA": {
-                "risk": 2, "safety": 2, "protocol": 2, "technical": 1, "verification": 1,
-                "data": 1, "evidence": 1, "scientific": 1, "bias": 1, "testing": 1,
-                "impact": 1, "policy": 1
-            },
-            "AgentB": {
-                "autonomy": 2, "freedom": 2, "ethics": 2, "moral": 2, "dignity": 1,
-                "philosophy": 1, "consciousness": 1, "agency": 1, "human": 1,
-                "societal": 1, "rights": 1, "knowledge": 1, "wisdom": 1
-            }
+            "AgentA": {"risk": 2, "safety": 2, "protocol": 2, "technical": 1, "verification": 1, "data": 1, "evidence": 1, "scientific": 1, "bias": 1, "testing": 1, "impact": 1, "policy": 1},
+            "AgentB": {"autonomy": 2, "freedom": 2, "ethics": 2, "moral": 2, "dignity": 1, "philosophy": 1, "consciousness": 1, "agency": 1, "human": 1, "societal": 1, "rights": 1, "knowledge": 1, "wisdom": 1}
         }
-
         scores = {"AgentA": 0, "AgentB": 0}
-        agent_contributions = {"AgentA": [], "AgentB": []}
-
         for turn in transcript:
             text = turn["text"].lower()
             agent_id = turn["agent"]
-            agent_contributions[agent_id].append(text)
-
-            # Apply weighted keyword scoring
             for keyword, weight in weighted_keywords.get(agent_id, {}).items():
                 if keyword in text:
                     scores[agent_id] += weight
-
-        # Novelty and diversity bonus: reward for unique and varied arguments
-        # This encourages agents to not just repeat keywords but to form diverse arguments
-        for agent_id in ["AgentA", "AgentB"]:
-            unique_arguments = set(agent_contributions[agent_id])
-            scores[agent_id] += len(unique_arguments) * 0.5 # Bonus for each unique argument
-
-            # Further bonus for using a wider range of their persona's keywords
-            used_keywords_count = 0
-            for arg_text in unique_arguments:
-                for keyword in weighted_keywords.get(agent_id, {}).keys():
-                    if keyword in arg_text:
-                        used_keywords_count += 1
-            scores[agent_id] += (used_keywords_count / len(weighted_keywords.get(agent_id, {}).keys())) * 2 # Max 2 points
-
-        # Determine winner and rationale
-        winner = ""
-        rationale = []
-
+        
         if scores["AgentA"] > scores["AgentB"]:
             winner = "AgentA"
-            # Find the persona for AgentA from the transcript
-            agent_a_persona = next((t['persona'] for t in transcript if t['agent'] == "AgentA"), "AgentA")
-            rationale.append(f"{agent_a_persona} (AgentA) presented a more compelling argument.")
-            rationale.append(f"Their arguments consistently emphasized key concepts like {', '.join(random.sample(list(weighted_keywords['AgentA'].keys()), min(3, len(weighted_keywords['AgentA'].keys()))))} and demonstrated a broader range of relevant points.")
         elif scores["AgentB"] > scores["AgentA"]:
             winner = "AgentB"
-            # Find the persona for AgentB from the transcript
-            agent_b_persona = next((t['persona'] for t in transcript if t['agent'] == "AgentB"), "AgentB")
-            rationale.append(f"{agent_b_persona} (AgentB) presented a more compelling argument.")
-            rationale.append(f"Their arguments effectively highlighted concepts such as {', '.join(random.sample(list(weighted_keywords['AgentB'].keys()), min(3, len(weighted_keywords['AgentB'].keys()))))} and showed greater diversity in their reasoning.")
         else:
-            # Tie-breaker: prefer the agent with more unique arguments, then AgentA
-            unique_a = len(set(agent_contributions["AgentA"]))
-            unique_b = len(set(agent_contributions["AgentB"]))
-            if unique_a > unique_b:
-                winner = "AgentA"
-                rationale.append("The debate was very close, but AgentA demonstrated slightly more unique arguments.")
-            elif unique_b > unique_a:
-                winner = "AgentB"
-                rationale.append("The debate was very close, but AgentB demonstrated slightly more unique arguments.")
-            else:
-                winner = "AgentA" # Default tie-breaker
-                rationale.append("The debate was a tie in terms of argument strength and diversity. AgentA is declared the winner by default.")
-
+            winner = "AgentA"
+        
+        rationale = self.get_judge_rationale(scores, transcript)
+        
         summary = {
             "scores": scores,
             "winner": winner,
-            "rationale": "\n".join(rationale)
+            "rationale": rationale
         }
         log_event("judge_summary", summary)
         return summary
