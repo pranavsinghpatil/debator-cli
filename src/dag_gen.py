@@ -22,9 +22,18 @@ def generate_debate_artifacts(final_state: DebateState, output_path="debate_dag"
     mermaid_code += f'    AgentB["{persona_b} (AgentB)"]\n'
     mermaid_code += f'    Judge["Judge"]\n'
 
-    if winner == 'AgentA':
+    # Extract agent identifier from winner string (e.g., "Scientist (AgentA)" -> "AgentA")
+    winner_agent = None
+    if winner and '(' in winner and ')' in winner:
+        winner_agent = winner.split('(')[1].split(')')[0]
+    elif winner in ['AgentA', 'AgentB']:
+        winner_agent = winner
+    else:
+        winner_agent = 'Tie'
+    
+    if winner_agent == 'AgentA':
         mermaid_code += '    style AgentA fill:#8fbc8f,stroke:#333,stroke-width:4px\n'
-    elif winner == 'AgentB':
+    elif winner_agent == 'AgentB':
         mermaid_code += '    style AgentB fill:#f0e68c,stroke:#333,stroke-width:4px\n'
 
     for i, turn in enumerate(memory_transcript):
