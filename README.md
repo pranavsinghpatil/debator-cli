@@ -4,6 +4,9 @@ A sophisticated debate simulation system built with LangGraph where AI agents en
 
 ## 🎯 Project Overview
 
+Please checkout the demo_video
+[Watch the demo video](./demo_video.mp4)
+
 This system implements a technical assignment for creating a multi-agent debate workflow using LangGraph. Two AI agents with different professional personas engage in an 8-round structured debate on a user-defined topic, with comprehensive memory management and automated judgment.
 
 ## ✨ Key Features
