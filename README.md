@@ -83,10 +83,16 @@ GEMINI_API_KEY=your_gemini_api_key_here
 ## 🎮 Usage
 
 ### Running the Application
+To start the debate simulation, simply run the main application script:
 
 ```bash
 python app.py
 ```
+
+> [!NOTE]
+> **Model Usage**: This project is designed to support both **Hugging Face (HF)** local models and the **Gemini API**.
+> - **Default**: We use the **Gemini API** (`gemini-2.0-flash`) by default for its superior speed, reasoning capabilities, and faster processing times.
+> - **Fallback**: Local HF models (e.g., `google/flan-t5-base`) are implemented as a robust fallback mechanism but are slower and resource-intensive.
 
 ### Example CLI Interaction
 

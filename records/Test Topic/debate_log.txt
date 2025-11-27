@@ -1,0 +1,1 @@
+{"timestamp": "2025-11-27T05:04:11.975549Z", "type": "debate_started", "payload": {"topic": "Test Topic", "persona_a": "Scientist", "persona_b": "Philosopher"}}

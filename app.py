@@ -2,7 +2,7 @@
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from main import run_debate
+from src.runner import run_debate
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
